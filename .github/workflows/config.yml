@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   ui-tests:
@@ -19,6 +20,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 2.5 для истории
+      - name: Checkout (copy) gh-pages repository to GitHub runner
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: ./.github/gh-pages
+
       # 3. Запуск тестов через Docker Compose
       - name: Run UI tests
         env:
@@ -27,11 +35,21 @@ jobs:
         run: |
           docker compose up --abort-on-container-exit --exit-code-from regression
 
+      # копирование истории    
+      - name: Copy history from gh-pages to allure-results
+        run: |
+          sudo mkdir -p allure-results/history  # Создает директорию для истории Allure
+          sudo cp -R ./.github/gh-pages/history/* allure-results/history/
+
       # 4. Генерация Allure отчета (если тесты прошли или упали)
       - name: Generate Allure report
         if: always()  # Генерировать отчет даже если тесты упали
         run: |
           docker compose run --rm regression allure generate allure-results --clean --output allure-report
+      # изменение аллюра для истории
+      - name: Update Allure history
+        run: |
+          sudo cp -R allure-report/history/* ./.github/gh-pages/history/
 
       # 5. Загрузка Allure отчета как artifact (для просмотра без деплоя)
       - name: Upload Allure report as artifact
