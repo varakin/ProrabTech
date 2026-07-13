@@ -1,0 +1,47 @@
+version: '3.8'  # Обновите версию до актуальной
+
+services:
+  regression:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: prorabtech-tests  # Добавлено имя контейнера для удобства
+    volumes:
+      - ./:/usr/workspace
+      - ./allure-results:/usr/workspace/allure-results  # Примонтируйте результаты отдельно
+    command: >
+      sh -c "
+        echo '=== Starting tests ===' && 
+        pytest -sv --alluredir=allure-results &&
+        echo '=== Tests finished ==='
+      "
+    working_dir: /usr/workspace
+    environment:
+      - LOGIN=${LOGIN}
+      - PASSWORD=${PASSWORD}
+      - PYTHONUNBUFFERED=1  # Добавлено для вывода логов в реальном времени
+    # Если нужно запустить Allure после тестов:
+    # command: >
+    #   sh -c "
+    #     pytest -sv --alluredir=allure-results &&
+    #     allure serve allure-results
+    #   "
+
+
+
+
+# version: '3.8'
+
+# services:
+#   regression:
+#     image: python:3.14-slim-bookworm
+#     build: 
+#       context: .
+#       dockerfile: Dockerfile
+#     volumes:
+#       - ./:/usr/workspace
+#     command: /bin/sh -c "ls -la && pytest -sv --alluredir=allure-results"
+#     working_dir: /usr/workspace
+#     environment:
+#       - LOGIN=${LOGIN}
+#       - PASSWORD=${PASSWORD}
